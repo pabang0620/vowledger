@@ -1,5 +1,12 @@
 # VowLedger
 
+> **Summary.** VowLedger is a Bryntum Gantt where dragging a wedding date rewrites the real scheduled PayPal invoices to match.
+> An agent reads payment rules from the signed contract; the server computes every date and amount, and a human approves each PayPal write.
+> PayPal events flow back too: a paid or overdue invoice makes the agent propose a schedule change, drawn as a second baseline.
+
+![Agent tool trail and proposal card](docs/img/05_agent_tool_trail_and_proposal_card.png)
+![After approval, every invoice synced](docs/img/08_after_sync_all_synced.png)
+
 **Drag the wedding date on a Bryntum Gantt and VowLedger rewrites the couple's real scheduled PayPal invoices to match, using payment rules an agent read from the signed contract.**
 
 A wedding photographer uploads a signed contract. An agent reads the payment clauses ("40% due 60 days before the event") and the server counts every date back from the wedding day. The first milestone (the deposit) is collected through a PayPal Orders checkout link, and the later milestones become PayPal Invoicing v2 invoices that are scheduled to be sent 14 days before each due date. When the couple moves the date, the photographer drags one bar on the Gantt. Unsent payments and production tasks follow, paid or sent payments stay pinned, and one approval rewrites the issue date and due date of every scheduled invoice.
@@ -114,7 +121,7 @@ Claude (`claude-sonnet-5-5`, tool use) does two jobs when a key is set, or when 
 
 ## Built with the APIMatic Context Plugin
 
-The APIMatic Context Plugin for PayPal (0.4.1) was applied with its skills `typescript-integrate-paypal`, `typescript-getting-started`, `typescript-error-handling`, `typescript-client-initialization`, `typescript-calling-endpoints`, `typescript-models`, `typescript-configuration-resilience` and `typescript-testing`. The generated SDK (package `paypal`, client `PaypalClient`, version 2.29.0) is installed from `git+https://github.com/context-plugins/paypal-typescript-sdk#main`.
+The APIMatic Context Plugin for PayPal (0.4.1) was applied with its skills `typescript-integrate-paypal`, `typescript-getting-started`, `typescript-error-handling`, `typescript-client-initialization`, `typescript-calling-endpoints`, `typescript-models`, `typescript-configuration-resilience` and `typescript-testing`. The generated SDK (package `paypal`, client `PaypalClient`, version 2.29.0) is installed from a commit-pinned `git+https://github.com/context-plugins/paypal-typescript-sdk#5d0df8a8817e5fdf2e2cd48e68f790ea4730aab2`.
 
 **Through the SDK (the deposit, Orders v2):** `orders.createOrder`, `orders.getOrder`, `orders.captureOrder`, in `server/integrations/orders/liveOrders.js`. The client is built once, bound to the sandbox host, with logging off and no SDK retry on writes. Each durable write has a claim stored before the call, a `PayPal-Request-Id`, a read-back or same-id replay after a lost answer, and a mapping from the SDK's error family to HTTP statuses. `test/orders.test.js` runs the real SDK over a faked `fetch` (22 tests, no network).
 

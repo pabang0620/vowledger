@@ -117,7 +117,7 @@ export async function runTrigger(ctx, contract, trigger) {
   const now = scheduleOf(ctx, contract)
   const changes = opt.schedule.tasks.flatMap((t) => {
     const was = now.tasks.find((x) => x.id === t.id)
-    return was && was.startDate !== t.startDate ? [{ id: t.id, name: t.name, from: was.startDate, to: t.startDate, text: `${t.name} ${shortLabel(was.startDate)} -> ${shortLabel(t.startDate)}` }] : []
+    return was && was.startDate !== t.startDate ? [{ id: t.id, name: t.name, from: was.startDate, to: t.startDate, text: opt.id.includes(':hold') ? `${t.name} waits for the ${step.label || 'installment'} invoice payment (planned ${shortLabel(was.startDate)}, shown as ${shortLabel(t.startDate)} while unpaid)` : `${t.name} ${shortLabel(was.startDate)} -> ${shortLabel(t.startDate)}` }] : []
   })
   const proposal = {
     id: randomUUID(),

@@ -9,7 +9,7 @@ Sources read (plugin 0.4.1): `typescript-integrate-paypal`, `typescript-getting-
 | Item | Value |
 | --- | --- |
 | Language / module format | plain JavaScript, ESM (`"type": "module"`), Node >= 20 (SDK floor 20.3). `instanceof PaypalError` is reliable because the app only loads the ESM dialect |
-| Package manager | npm. `paypal` is a dependency (`github:context-plugins/paypal-typescript-sdk#main`), `dist/` is built |
+| Package manager | npm. `paypal` is a dependency (`github:context-plugins/paypal-typescript-sdk#5d0df8a8817e5fdf2e2cd48e68f790ea4730aab2`), `dist/` is built |
 | Type check | none configured (no tsconfig, plain JS) |
 | Tests / build | `node --test test/*.test.js` / `vite build` (client only) |
 | Adapter exemplar | `server/integrations/mockPaypal.js` and `livePaypal.js` share one interface; the new Orders adapters follow the same pair pattern |
