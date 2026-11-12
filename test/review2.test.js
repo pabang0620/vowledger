@@ -186,3 +186,26 @@ test('fail-next is scoped to the session that armed it', async () => {
     await app.close()
   }
 })
+
+// ---- UI state derived from payment state ----
+
+test('reminder card disappears once the installment is paid, and executing it is refused', async () => {
+  const { ctx, session, contract } = await approvedB()
+  const step = contract.steps.find((s) => s.kind === 'installment')
+  const card = [...contract.approvals.values()][0]
+  const fake = { ...card, id: 'rem1', type: 'REMINDER', status: 'pending', versioned: false, payload: { private: { stepId: step.id, note: 'x' }, public: { stepId: step.id } } }
+  contract.approvals.set('rem1', fake)
+  assert.ok(publicContract(ctx, contract).approvals.some((a) => a.id === 'rem1'))
+  step.invoice = { ...(step.invoice || {}), status: 'PAID' }
+  assert.ok(!publicContract(ctx, contract).approvals.some((a) => a.id === 'rem1'))
+  await assert.rejects(() => executeApproval(ctx, session, contract.id, 'rem1'), /already paid/)
+})
+
+test('step band: unpaid deposit does not tick step 2 even if a later installment is paid', async () => {
+  const { contract } = await approvedB()
+  const inst = contract.steps.filter((s) => s.kind === 'installment')
+  inst[1].invoice = { ...(inst[1].invoice || {}), status: 'PAID' }
+  assert.equal(stepsDone(contract).paid, false)
+  inst[0].invoice = { ...(inst[0].invoice || {}), status: 'PAID' }
+  assert.equal(stepsDone(contract).paid, true)
+})

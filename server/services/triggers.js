@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { listOptions, dueUnpaidTriggers } from '../schedule/options.js'
 import { PAID_STATUSES, PINNED_STATUSES, moveConflict } from '../schedule/engine.js'
-import { diffPaypal } from '../schedule/diffPaypal.js'
+import { diffPaypal, changeLine, unchangedDetail } from '../schedule/diffPaypal.js'
 import { modelOf } from '../schedule/model.js'
 import { shortLabel } from '../dates.js'
 import { payRef } from '../schedule/depositStatus.js'
@@ -64,13 +64,19 @@ function releaseHolds(ctx, contract, step) {
 // Webhook or poll entrance. Duplicate deliveries (same event id) are ignored.
 export async function handleInvoiceEvent(ctx, event) {
   if (!event?.id || ctx.seenEvents.has(event.id)) return { duplicate: true }
-  ctx.seenEvents.add(event.id)
   const invoiceId = event.resource?.invoice?.id || event.resource?.id
   const found = invoiceId && ctx.store.findByInvoiceId(invoiceId)
   if (!found) return { ignored: true }
   const { contract, step } = found
   // The event type is only a hint: the actual status always comes from get_invoice.
-  const result = await withLock(contract.id, () => refreshInvoice(ctx, contract, step))
+  const result = await withLock(contract.id, async () => {
+    if (ctx.seenEvents.has(event.id)) return null
+    const refreshed = await refreshInvoice(ctx, contract, step)
+    // Only acknowledge a delivery after the source invoice was read successfully.
+    ctx.seenEvents.add(event.id)
+    return refreshed
+  })
+  if (!result) return { duplicate: true }
   if (result.newlyPaid) await runTrigger(ctx, contract, { kind: 'PAID', stepId: step.id })
   await scanDueTriggers(ctx, contract)
   return { handled: true, ...result }
@@ -125,6 +131,7 @@ export async function runTrigger(ctx, contract, trigger) {
     optionId: opt.id,
     label: opt.label,
     reason: agent.choice.reason,
+    notChosen: agent.choice.notChosen || [],
     planVersion: contract.planVersion,
     adjustments: opt.adjustments,
     schedule: opt.schedule,
@@ -153,7 +160,7 @@ export async function runTrigger(ctx, contract, trigger) {
       type: 'REMINDER',
       title: `Send a reminder for ${step.invoice.number}`,
       versioned: false,
-      lines: [{ text: agent.choice.reminderNote }, { text: `Contract: "${step.quote}"` }],
+      lines: [{ text: agent.choice.reminderNote }, { text: `Contract${agent.choice.reminderClause ? ` (cited by the agent)` : ''}: "${agent.choice.reminderQuote || step.quote}"` }],
       approveLabel: 'Send reminder',
       payload: { private: { stepId: step.id, note: agent.choice.reminderNote }, public: { stepId: step.id } },
     }))
@@ -177,10 +184,11 @@ export async function prepareMove(ctx, contract, eventDate) {
     type: 'MOVE_EVENT',
     title: `Move wedding ${shortLabel(contract.eventDate)} -> ${shortLabel(eventDate)}?`,
     versioned: true,
-    lines: diff.changes.map((c) => ({ text: c.text, kind: c.kind, stepId: c.stepId })),
-    unchanged: diff.unchanged.map((u) => ({ text: `${u.invoiceNumber} ${u.label} ${usd(u.amountCents)} ${u.status}`, stepId: u.stepId })),
+    lines: diff.changes.map(changeLine),
+    unchanged: diff.unchanged.map((u) => ({ text: `${u.invoiceNumber} ${u.label} ${usd(u.amountCents)} ${u.status}`, stepId: u.stepId, detail: unchangedDetail(u) })),
     note: agent.choice.reason,
     noteBy: viaLabel(agent),
+    notChosen: agent.choice.notChosen || [],
     approveLabel: `Approve ${diff.changes.length} PayPal change${diff.changes.length === 1 ? '' : 's'}`,
     payload: { private: { eventDate, previousEventDate: contract.eventDate, optionId: opt.id, feeCents: opt.feeCents || 0 }, public: { eventDate, previousEventDate: contract.eventDate } },
     previewSchedule: opt.schedule,

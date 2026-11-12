@@ -1,7 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { executeApproval } from '../server/services/approvals.js'
 import { config } from '../server/config.js'
-import { makeCtx, sampleContract, approveInvoices, startApp, settle } from './helpers.js'
+import { makeCtx, sampleContract, approveInvoices, pendingOf, startApp, settle } from './helpers.js'
 
 async function post(app, path, body, headers = {}) {
   const res = await fetch(`${app.base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) })
@@ -45,6 +46,42 @@ test('input validation: bad ids, dates and bodies are 400, unknown sample is 400
     assert.equal((await app.call('GET', '/api/contracts/not-a-uuid', { session })).status, 400)
     assert.equal((await app.call('GET', '/api/contracts', { session: 'not-a-uuid' })).status, 400)
     assert.equal((await app.call('POST', '/api/dev/fail-next', { session, body: { op: 'delete' } })).status, 400)
+  } finally {
+    await app.close()
+  }
+})
+
+test('a temporary invoice lookup failure allows redelivery to release the held task once', async () => {
+  const ctx = makeCtx()
+  ctx.invoicing.setWebhookSink(() => {})
+  const { session, contract } = await sampleContract(ctx, 'A')
+  await approveInvoices(ctx, session, contract)
+  const [apply] = pendingOf(contract, 'APPLY_PROPOSAL')
+  await executeApproval(ctx, session, contract.id, apply.id)
+  const invoice = contract.steps.find((step) => step.id === 'p2').invoice
+  assert.equal(contract.adjustments.t2.untilStep, 'p2')
+  ctx.setToday('2026-11-20')
+  await ctx.invoicing.simulateBuyerPayment(invoice.id)
+  const originalGet = ctx.invoicing.getInvoice.bind(ctx.invoicing)
+  let reads = 0
+  ctx.invoicing.getInvoice = async (id) => {
+    reads += 1
+    if (reads === 1) throw new Error('Temporary invoice lookup failure')
+    return originalGet(id)
+  }
+  const app = await startApp(ctx)
+  const body = { id: 'WH-RETRY-HELD', event_type: 'INVOICING.INVOICE.PAID', resource: { invoice: { id: invoice.id } } }
+  const deliver = () => post(app, '/api/webhooks/paypal', body, { 'x-mock-webhook-secret': config.mockWebhookSecret })
+  try {
+    assert.ok((await deliver()).status >= 500)
+    assert.equal(contract.adjustments.t2.untilStep, 'p2')
+    const deliveries = await Promise.all([deliver(), deliver()])
+    assert.ok(deliveries.every((d) => d.status === 200))
+    assert.equal(deliveries.filter((d) => d.body.data.duplicate).length, 1)
+    assert.equal(reads, 2)
+    assert.equal(invoice.status, 'PAID')
+    assert.equal(contract.adjustments.t2.untilStep, undefined)
+    assert.equal(contract.activity.filter((a) => a.text.startsWith('Hold released:')).length, 1)
   } finally {
     await app.close()
   }

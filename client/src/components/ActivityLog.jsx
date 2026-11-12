@@ -3,7 +3,7 @@ const ACTOR = { human: 'Lena', agent: 'Agent', paypal: 'PayPal', system: 'System
 // Who approved what, and what PayPal did, newest first.
 export default function ActivityLog({ activity }) {
   return (
-    <section className="vl-activity" aria-label="Activity">
+    <section id="activity" className="vl-activity" aria-label="Activity">
       <h3>Activity</h3>
       <ol>
         {activity.slice(0, 14).map((a) => (

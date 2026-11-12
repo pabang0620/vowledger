@@ -56,7 +56,7 @@ test('account backend: tool calls map to the same tools, the pick becomes a choi
   const seen = fakeSdk([
     ['get_invoice_status', { step_id: 'p1' }],
     ['list_options', {}],
-    ['propose_option', { option_id: pick.id, reason: 'The deposit is in, so the shoot can start early.' }],
+    ['propose_option', { option_id: pick.id, reason: 'The deposit is in, so the shoot can start early.', not_chosen: options.filter((o) => o.id !== pick.id).map((o) => ({ option_id: o.id, why: 'Waiting gains nothing once the deposit is in.' })) }],
   ])
   const out = await runAccountAgent(ctx, contract, trigger, options)
   assert.equal(out.via, 'claude-account')

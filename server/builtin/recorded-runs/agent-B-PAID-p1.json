@@ -10,15 +10,21 @@
     "paid:p1:keep",
     "paid:p1:pull:t1"
   ],
-  "durationMs": 8494,
+  "durationMs": 8853,
   "toolCalls": [
+    {
+      "tool": "get_schedule",
+      "ok": true,
+      "input": {},
+      "atMs": 2584
+    },
     {
       "tool": "get_dependents",
       "ok": true,
       "input": {
         "step_id": "p1"
       },
-      "atMs": 3753
+      "atMs": 2632
     },
     {
       "tool": "get_invoice_status",
@@ -26,36 +32,51 @@
       "input": {
         "step_id": "p1"
       },
-      "atMs": 4212
+      "atMs": 3296
     },
     {
       "tool": "list_options",
       "ok": true,
       "input": {},
-      "atMs": 4221
+      "atMs": 3315
     },
     {
-      "tool": "get_schedule",
+      "tool": "list_contract_clauses",
       "ok": true,
       "input": {},
-      "atMs": 4232
+      "atMs": 3329
     },
     {
       "tool": "propose_option",
       "ok": true,
       "input": {
         "option_id": "paid:p1:pull:t1",
-        "reason": "The first payment is confirmed. The \"Engagement shoot\" follows it and is internal work with no outside cost, so it can start early instead of waiting. Only \"Engagement shoot\" moves. \"Album order\" and \"Final shot list\" stay where they are."
+        "reason": "The Retainer (contract section p1) is confirmed as paid. The only task that follows it is the Engagement shoot, which has no outside cost, so it can safely start early instead of waiting. That frees up the couple's calendar sooner at no risk to the business. Only the Engagement shoot moves. Album order and Final shot list stay as planned, because they follow the Second installment (p2) and the Balance (p3), which are not paid yet. Album order is the task with outside cost, and it remains tied to p2.",
+        "not_chosen": [
+          {
+            "option_id": "paid:p1:keep",
+            "why": "Keeping the plan leaves the internal Engagement shoot waiting for no reason, even though the Retainer is paid and the task has no outside cost."
+          }
+        ]
       },
-      "atMs": 5823
+      "atMs": 6488
     }
   ],
   "choice": {
     "optionId": "paid:p1:pull:t1",
-    "reason": "The first payment is confirmed. The \"Engagement shoot\" follows it and is internal work with no outside cost, so it can start early instead of waiting. Only \"Engagement shoot\" moves. \"Album order\" and \"Final shot list\" stay where they are.",
-    "reminderNote": null
+    "reason": "The Retainer (contract section p1) is confirmed as paid. The only task that follows it is the Engagement shoot, which has no outside cost, so it can safely start early instead of waiting. That frees up the couple's calendar sooner at no risk to the business. Only the Engagement shoot moves. Album order and Final shot list stay as planned, because they follow the Second installment (p2) and the Balance (p3), which are not paid yet. Album order is the task with outside cost, and it remains tied to p2.",
+    "notChosen": [
+      {
+        "optionId": "paid:p1:keep",
+        "label": "Keep the planned dates",
+        "why": "Keeping the plan leaves the internal Engagement shoot waiting for no reason, even though the Retainer is paid and the task has no outside cost."
+      }
+    ],
+    "reminderNote": null,
+    "reminderClause": null,
+    "reminderQuote": null
   },
-  "modelText": "I proposed starting the \"Engagement shoot\" early, and a human now has to approve it before anything changes.\n\nThe first payment is confirmed as paid. The \"Engagement shoot\" follows it and is internal work with no outside cost, so nothing stops it from starting sooner.\n\n\"Album order\" and \"Final shot list\" stay where they are.",
+  "modelText": "I proposed starting the Engagement shoot early, and it now waits for a human to approve it.\n\nThe Retainer (contract section p1) is paid. The Engagement shoot is the only task that follows it, and it has no outside cost, so it can safely start sooner.\n\nAlbum order and Final shot list stay as planned. They follow the Second installment (p2) and the Balance (p3), which are both unpaid. Album order is the task with outside cost, and it stays tied to p2.\n\nI did not choose the \"keep the planned dates\" option, because it would leave the Engagement shoot waiting for no reason.",
   "model": "claude-sonnet-5-5",
   "modelName": "Claude Sonnet",
   "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",

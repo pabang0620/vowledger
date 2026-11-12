@@ -8,6 +8,8 @@ Set `PAYPAL_CLIENT_ID` and `PAYPAL_CLIENT_SECRET` (sandbox REST app) and unset `
 
 `npm run check:bryntum` (app running with `FORCE_MOCK=1`) drives the real Bryntum Gantt 7.3.8 trial in headless Chromium.
 
+Stability (2026-11-12): the script has no fixed sleeps; each step waits for the server answer it caused and then for the Gantt to show the server's dates (the Gantt is re-mounted after a refused move). Five runs in a row against one mock server (port 3594): 7/7 each time.
+
 | Check | Result |
 |---|---|
 | VB1 Loading the server's dates into a Backward project does not make Bryntum recalculate them (event is held by `startnolaterthan`, pinned items by `muststarton`, dependency lags copied from the server) | pass |
@@ -55,6 +57,8 @@ If it fails: replace the `SCHEDULED` state with a server scheduler that calls `s
 
 ## V5 Webhook delivery
 
+**Recheck 2026-11-13 KST (sandbox OAuth + read-only webhook inventory).** The sandbox REST application accepted OAuth (HTTP 200) and listed four registered listeners, all for other entries. None subscribed to INVOICING.INVOICE.PAID or to all event types. The local VowLedger webhook ID is unset. No test payment was initiated: an invoice event cannot reach this application through the current registrations. Public callback delivery and PayPal signature verification remain unconfirmed. In the sandbox demo, use Payments and polling > Poll invoices. The local HTTP regression covers authentication rejection, a transient invoice-read failure, and concurrent mock redeliveries resulting in a single hold release.
+
 **Result 2026-11-12: SKIPPED.** Needs a public URL or tunnel and a webhook id. A person must expose `/api/webhooks/paypal`, create the sandbox webhook and set `PAYPAL_WEBHOOK_ID`.
 
 1. Expose `/api/webhooks/paypal` (for example with a tunnel), create a sandbox webhook for `INVOICING.INVOICE.PAID`, `.SCHEDULED`, `.UPDATED`, `.CANCELLED`, `.CREATED`, and set `PAYPAL_WEBHOOK_ID`.
@@ -96,6 +100,8 @@ Note: an earlier attempt of this run, before `FORCE_MOCK_PAYPAL` existed, used t
 
 **Re-recorded 2026-11-12 after the "moves" fix (account-mode Sonnet, `npm run record:runs -- agent-B-PAID-p1 agent-B-MOVE agent-A-DUE_UNPAID-p2`).** The first agent-B-MOVE recording said the Engagement shoot shifts with the wedding, although it is tied to the captured deposit and stays. Root cause: `get_schedule` and `list_options` gave dates only, not which tasks move. Both tools now say it (`movesWithWedding`, `tiedToPinnedPayment`, `movingTasks`, `unchangedTasks`), the prompt says that tasks tied to a sent or paid payment stay, and `propose_option` refuses a reason that says an unchanged task moves. New runs: agent-B-PAID-p1 `get_dependents > get_invoice_status > list_options > get_schedule > propose_option`, `paid:p1:pull:t1`, 8.5 s; agent-B-MOVE `get_schedule > list_options > list_contract_clauses > propose_option`, `move:fee-add`, 10.8 s, reason "Two tasks ... move with it: Album order and Final shot list ... Engagement shoot does not move. It is tied to the Retainer, which is already paid"; agent-A-DUE_UNPAID-p2 `get_schedule > get_invoice_status > get_dependents > list_contract_clauses > list_options > propose_option`, `due:p2:hold:t2` with a reminder note, 11.9 s. Every call passed the new check on the first try.
 
+**Re-recorded 2026-11-12 after widening the decision (account-mode Sonnet, same command, PayPal on the mock).** `propose_option` now also requires `not_chosen`: every other option from `list_options` with its own reason, checked by the server (each other id exactly once, no unknown id, no date, no amount). A reminder must name the contract clause it rests on (`reminder_clause`, checked against `list_contract_clauses`), and no reason, `not_chosen` line or reminder may carry a dollar amount. New runs: agent-B-PAID-p1 `get_schedule > get_dependents > get_invoice_status > list_options > list_contract_clauses > propose_option`, `paid:p1:pull:t1`, not chosen "Keep the planned dates" because "it leaves the internal Engagement shoot waiting for no reason", 8.9 s; agent-B-MOVE `get_schedule > list_options > list_contract_clauses > propose_option`, `move:fee-add`, not chosen "Move the date without a fee" because "it waives the change fee even though the date_change clause applies", 9.1 s; agent-A-DUE_UNPAID-p2 `get_schedule > get_invoice_status > get_dependents > list_contract_clauses > list_options > propose_option`, `due:p2:hold:t2`, not chosen "Proceed as planned" because the album order would start while the installment is unpaid, reminder citing clause `p2` ("40% of the total fee is due 60 days before the event."), 10.8 s. Every call passed the check on the first try. The screen shows each "Not chosen" line under the agent's reason.
+
 Original steps for the API-key path:
 
 1. Set `ANTHROPIC_API_KEY`, open a sample, and check that the clauses match the mock reader's (`server/contracts/extract.js`, tool `submit_contract_terms`).
@@ -123,3 +129,7 @@ Needs the sandbox business account and a sandbox buyer account. `APP_BASE_URL` m
 
 If step 3's redirect does not return to the app (the sandbox ignores `application_context.return_url`): move the same three fields (`brand_name`, `return_url`, `cancel_url`) into `payment_source.paypal.experience_context` in `liveOrders.js`, or press "Capture now" after the payer approved (that path reads the order and captures the same way).
 If the replay in step 6 creates a second order, create is not idempotent on `PayPal-Request-Id`: change `createDeposit` to settle by asking the person for the order id in the dashboard (`custom_id` carries the reference) and add it by hand; the claim row already stops the app from creating a second one by itself.
+
+## Hosting
+
+- **Result: PASS 2026-11-12.** https://vowledger.35-216-2-121.sslip.io on a Google Cloud VM (nginx, Let's Encrypt, systemd). Mode: mock PayPal, recorded Claude Sonnet runs. `GET /` and the health endpoint return 200 over https. Walked headless against the https host: Testing instructions steps 1 to 5 (Ortiz & Lee $4,800, approve, deposit checkout returned to the https host and CAPTURED, apply proposal, move the date to 2027-04-30 with 0 not synced, Novak & Daniels blocked at $4,560).

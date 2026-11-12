@@ -18,7 +18,8 @@ test('the model has no tool that moves money or writes a date', () => {
   const names = TOOL_DEFS.map((t) => t.name)
   assert.deepEqual(names.sort(), ['get_dependents', 'get_invoice_status', 'get_schedule', 'list_contract_clauses', 'list_options', 'propose_option'])
   const propose = TOOL_DEFS.find((t) => t.name === 'propose_option')
-  assert.deepEqual(Object.keys(propose.input_schema.properties), ['option_id', 'reason', 'reminder_note'])
+  assert.deepEqual(Object.keys(propose.input_schema.properties), ['option_id', 'reason', 'not_chosen', 'reminder_note', 'reminder_clause'])
+  assert.deepEqual(propose.input_schema.required, ['option_id', 'reason', 'not_chosen'])
 })
 
 test('propose_option rejects ids that are not in the server list, and dates', async () => {
@@ -35,10 +36,56 @@ test('propose_option rejects ids that are not in the server list, and dates', as
   const dated = await runToolSafely(tools, 'propose_option', { option_id: 'paid:p1:pull:t1', reason: 'Start it on 2026-11-13 please' })
   assert.equal(dated.ok, false)
   assert.match(dated.result.error, /Do not write dates/)
-  const ok = await runToolSafely(tools, 'propose_option', { option_id: 'paid:p1:pull:t1', reason: 'No outside cost, so it can start now.' })
+  const keepWhy = [{ option_id: 'paid:p1:keep', why: 'Waiting gains nothing once the deposit is in.' }]
+  const ok = await runToolSafely(tools, 'propose_option', { option_id: 'paid:p1:pull:t1', reason: 'No outside cost, so it can start now.', not_chosen: keepWhy })
   assert.equal(ok.ok, true)
   assert.equal(sink.choice.optionId, 'paid:p1:pull:t1')
+  assert.deepEqual(sink.choice.notChosen, [{ optionId: 'paid:p1:keep', label: 'Keep the planned dates', why: 'Waiting gains nothing once the deposit is in.' }])
   assert.equal(trigger.kind, 'DUE_UNPAID')
+})
+
+test('propose_option: every other option needs its own reason, and no text may carry a date or an amount', async () => {
+  const { ctx, contract } = await paidContext()
+  const trigger = { kind: 'PAID', stepId: 'p1' }
+  const options = listOptions(contract, trigger, ctx.today())
+  const sink = { choice: null }
+  const tools = buildTools(ctx, contract, trigger, options, sink)
+  const base = { option_id: 'paid:p1:pull:t1', reason: 'No outside cost, so the shoot can start now.' }
+  const cases = [
+    [{ ...base }, /must also explain: paid:p1:keep/],
+    [{ ...base, not_chosen: [] }, /must also explain/],
+    [{ ...base, not_chosen: [{ option_id: 'paid:p1:pull:t1', why: 'It is the pick itself.' }] }, /not one of the other options/],
+    [{ ...base, not_chosen: [{ option_id: 'paid:p1:keep', why: 'ok' }] }, /5 to 300/],
+    [{ ...base, not_chosen: [{ option_id: 'paid:p1:keep', why: 'Keeping it until 2026-11-26 wastes time.' }] }, /dates or amounts/],
+    [{ ...base, not_chosen: [{ option_id: 'paid:p1:keep', why: 'Keeping it costs $150 later.' }] }, /dates or amounts/],
+    [{ ...base, reason: 'The $1,440 deposit is in, so the shoot can start.', not_chosen: [{ option_id: 'paid:p1:keep', why: 'Waiting gains nothing.' }] }, /amounts/],
+  ]
+  for (const [input, error] of cases) {
+    const out = await runToolSafely(tools, 'propose_option', input)
+    assert.equal(out.ok, false, JSON.stringify(input))
+    assert.match(out.result.error, error)
+  }
+  assert.equal(sink.choice, null)
+})
+
+test('propose_option: a reminder cites a real contract clause and carries no amount', async () => {
+  const ctx = makeCtx()
+  const { session, contract } = await sampleContract(ctx, 'A')
+  await approveInvoices(ctx, session, contract)
+  const trigger = { kind: 'DUE_UNPAID', stepId: 'p2' }
+  const options = listOptions(contract, trigger, ctx.today())
+  const sink = { choice: null }
+  const tools = buildTools(ctx, contract, trigger, options, sink)
+  const pick = options.find((o) => o.id.includes(':hold:'))
+  const rest = options.filter((o) => o.id !== pick.id).map((o) => ({ option_id: o.id, why: 'The album order costs outside money.' }))
+  const base = { option_id: pick.id, reason: 'The album order costs outside money, so it waits for this installment.', not_chosen: rest }
+  const unknown = await runToolSafely(tools, 'propose_option', { ...base, reminder_note: 'A friendly reminder that your invoice is due.', reminder_clause: 'p9' })
+  assert.match(unknown.result.error, /Unknown reminder_clause/)
+  const money = await runToolSafely(tools, 'propose_option', { ...base, reminder_note: 'Please pay the $1,920 now.', reminder_clause: 'p2' })
+  assert.match(money.result.error, /no amounts/)
+  const ok = await runToolSafely(tools, 'propose_option', { ...base, reminder_note: 'A friendly reminder that your invoice is due.', reminder_clause: 'p2' })
+  assert.equal(ok.ok, true)
+  assert.equal(sink.choice.reminderQuote, contract.steps.find((s) => s.id === 'p2').quote)
 })
 
 test('list_options returns server-computed dates for every choice', async () => {

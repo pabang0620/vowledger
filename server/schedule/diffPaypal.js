@@ -50,3 +50,7 @@ export function diffPaypal(contract, schedule, { today, feeCents = 0, feeQuote =
   }
   return { changes, unchanged }
 }
+
+// Card lines for an approval: the text plus the structured before/after the approval panel draws.
+export const changeLine = (c) => ({ text: c.text, kind: c.kind, stepId: c.stepId, detail: { invoiceNumber: c.invoiceNumber || null, label: c.label, amountCents: c.amountCents, sendNow: Boolean(c.sendNow), from: c.from || null, to: c.to || null } })
+export const unchangedDetail = (u) => ({ invoiceNumber: u.invoiceNumber, label: u.label, amountCents: u.amountCents, status: u.status })

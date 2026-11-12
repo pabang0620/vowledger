@@ -1,0 +1,128 @@
+/* Right rail: the money summary, and the approval panel that takes its place while a card waits. */
+.vl-rail { padding: var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+.vl-kicker { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; margin: 0; }
+.vl-big { font-size: 40px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; margin: 0; }
+.vl-big small { font-size: var(--fs-md); color: var(--muted); font-weight: 600; letter-spacing: 0; margin-left: 6px; }
+.vl-meter { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--line); gap: 2px; }
+.vl-meter i { display: block; height: 100%; }
+.vl-meter-paid { background: var(--st-captured); }
+.vl-meter-sched { background: var(--st-pending); }
+.vl-meterkey { display: flex; gap: var(--sp-4); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--muted); font-weight: 600; margin: 0; }
+.vl-meterkey b { color: var(--ink); }
+.vl-pays { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); }
+.vl-pay { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.vl-pay:last-child { border-bottom: 0; }
+.vl-amt { font-weight: 800; font-variant-numeric: tabular-nums; text-align: right; }
+.vl-pay small { color: var(--muted); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.vl-pay > .vl-pill { justify-self: end; align-self: center; }
+.vl-next { display: flex; gap: 10px; background: var(--brand-soft); border-radius: var(--r-md); padding: 12px 14px; font-size: var(--fs-sm); }
+.vl-next .fa { color: var(--st-pending); margin-top: 4px; }
+.vl-next p { margin: 0; }
+.vl-next b { display: block; }
+.vl-clauses-box { border-top: 1px solid var(--line); padding-top: var(--sp-3); display: grid; gap: 8px; }
+.vl-clauses { padding-left: 18px; margin: 0; display: grid; gap: 8px; font-size: var(--fs-sm); }
+.vl-rest .vl-money { padding: var(--sp-4); }
+
+/* Pills: money states */
+.vl-pill { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; padding: 2px 8px; border-radius: var(--r-pill); white-space: nowrap; background: var(--surface-2); color: var(--muted); margin-right: 4px; }
+.vl-st-pending, .vl-p-scheduled, .vl-p-order_created, .vl-p-draft { color: var(--st-pending); background: var(--st-pending-bg); }
+.vl-st-held, .vl-p-sent, .vl-p-unpaid, .vl-p-partially_paid, .vl-p-approved, .vl-p-checking, .vl-p-wait { color: var(--st-held); background: var(--st-held-bg); }
+.vl-st-captured, .vl-p-captured, .vl-p-paid, .vl-p-marked_as_paid, .vl-p-ok { color: var(--st-captured); background: var(--st-captured-bg); }
+.vl-st-refunded { color: var(--st-refunded); background: var(--st-refunded-bg); }
+.vl-st-failed, .vl-p-bad, .vl-p-voided { color: var(--st-failed); background: var(--st-failed-bg); }
+.vl-p-none { background: var(--surface-2); color: var(--muted); }
+
+/* Approval panel */
+.vl-approve { border: 2px solid var(--brand); border-radius: var(--r-lg); box-shadow: var(--shadow-2); background: var(--surface); display: flex; flex-direction: column; max-height: calc(100vh - 170px); min-height: 420px; overflow: hidden; }
+.vl-approve-in > * { flex: none; }
+.vl-approve-in { padding: var(--sp-5) var(--sp-5) var(--sp-3); display: flex; flex-direction: column; gap: var(--sp-3); overflow-y: auto; min-height: 0; }
+.vl-approve header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.vl-approve h2 { font-size: var(--fs-xl); font-weight: 800; letter-spacing: -0.02em; }
+.vl-lead { font-size: var(--fs-sm); color: var(--muted); margin: 0; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.vl-lead.is-open { display: block; }
+.vl-diffs { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.vl-diff { border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; font-size: var(--fs-sm); display: grid; gap: 4px; }
+.vl-diff p { margin: 0; }
+.vl-diff-head { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vl-diff-row { display: grid; grid-template-columns: 44px 1fr; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vl-diff-row s { color: var(--muted); }
+.vl-diff-row em { font-style: normal; color: var(--ink); font-weight: 800; }
+.vl-diff-text { font-variant-numeric: tabular-nums; }
+.vl-diff-text.is-new { color: var(--accent); font-weight: 700; }
+.vl-diff-fee { background: var(--accent-soft); border-color: transparent; }
+.vl-diff-pin { background: var(--surface-2); color: var(--muted); }
+.vl-diff-pinrow { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.vl-diff-pinrow strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.vl-who { display: flex; gap: 10px; align-items: flex-start; font-size: var(--fs-sm); padding-top: var(--sp-2); border-top: 1px solid var(--line); margin: 0; }
+.vl-who .fa { color: var(--brand); margin-top: 4px; }
+.vl-calls { list-style: none; margin: 0; padding: 0; font-family: var(--font-mono); font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.vl-approve-foot { flex: none; padding: var(--sp-4) var(--sp-5); border-top: 1px solid var(--line); background: var(--surface-2); display: grid; gap: 10px; }
+.vl-tot { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-sm); color: var(--muted); margin: 0; }
+.vl-tot b { color: var(--ink); }
+.vl-btns { display: flex; gap: var(--sp-2); }
+.vl-btn-go { flex: 1; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.vl-btn-cancel { min-height: 46px; padding: 0 18px; }
+.vl-pp { font-style: italic; font-weight: 800; font-size: 16px; }
+
+/* Cards in the main column (deposit, agent, errors, activity, demo) */
+.vl-card header, .vl-proposal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.vl-card h3 { font-size: var(--fs-lg); }
+.vl-version { font-size: var(--fs-xs); color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); padding: 1px 8px; border-radius: var(--r-pill); margin-left: auto; white-space: nowrap; }
+.vl-card-note { color: var(--muted); }
+.vl-lines { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 5px; font-variant-numeric: tabular-nums; }
+.vl-lines .is-new { color: var(--accent); font-weight: 600; }
+.vl-unchanged { font-size: var(--fs-sm); margin-top: 0; }
+.vl-warn { color: var(--warn); font-weight: 700; }
+.vl-ok { color: var(--ok); font-weight: 700; }
+.vl-muted { color: var(--muted); }
+.vl-fine { font-size: var(--fs-xs); }
+.vl-bad { color: var(--bad); font-weight: 700; }
+.vl-deposit { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.vl-deposit a.vl-btn { text-decoration: none; display: inline-flex; align-items: center; }
+
+.vl-error { padding: var(--sp-4); background: var(--st-failed-bg) !important; border-color: #f6c5c0 !important; border-left: 4px solid var(--bad) !important; }
+.vl-error h3 { color: var(--bad); margin-bottom: 6px; }
+.vl-clause-edit { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
+.vl-clause-edit label { display: flex; align-items: center; gap: 8px; }
+.vl-clause-edit input { width: 72px; padding: 6px; border: 1px solid var(--line-strong); border-radius: 6px; }
+
+.vl-agent h3, .vl-activity h3 { font-size: var(--fs-md); font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+.vl-ai { width: 28px; height: 28px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); display: inline-grid; place-items: center; font-weight: 800; font-size: 12px; }
+.vl-proposal { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; font-size: var(--fs-sm); }
+.vl-proposal.is-pending { border-top-color: var(--proposal); }
+.vl-proposal.is-stale, .vl-proposal.is-dismissed { opacity: 0.6; }
+.vl-proposal-pick strong { color: var(--accent); }
+.vl-changes li { color: var(--accent); font-weight: 600; }
+.vl-tools { font-size: 11px; color: var(--muted); font-family: var(--font-mono); overflow-wrap: anywhere; }
+.vl-proposal .vl-card { margin-top: 8px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--proposal); border-radius: var(--r-md); }
+
+.vl-demo summary { cursor: pointer; font-weight: 700; }
+.vl-demo-body { display: grid; gap: 8px; margin-top: 10px; }
+.vl-demo-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.vl-label { min-width: 150px; font-size: var(--fs-sm); color: var(--muted); }
+
+.vl-activity ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px var(--sp-5); font-size: var(--fs-xs); }
+.vl-activity li { display: flex; gap: 8px; }
+.vl-activity li strong { min-width: 44px; }
+.vl-activity li.is-bad { color: var(--bad); }
+.vl-activity time { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vl-foot { max-width: 1480px; margin: 16px auto 0; padding: 0 var(--gutter) 24px; font-size: var(--fs-xs); color: var(--muted); }
+
+@media (max-width: 1100px) {
+  .vl-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'gantt' 'side' 'rest'; }
+  .vl-side { position: static; }
+  .vl-approve { max-height: none; }
+  .vl-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  :root { --gutter: 16px; }
+  .vl-nav { gap: var(--sp-2) var(--sp-3); padding: 8px var(--gutter); }
+  .vl-navlinks a, .vl-me { display: none; }
+  .vl-modes { order: 5; width: 100%; }
+  .vl-head h2 { font-size: 26px; }
+  .vl-move { margin-left: 0; }
+  .vl-activity ol { grid-template-columns: 1fr; }
+  .vl-label { min-width: 100%; }
+  .vl-big { font-size: 34px; }
+}
+.vl-more { padding: 0; font-size: var(--fs-xs); text-align: left; }

@@ -10,13 +10,13 @@
     "due:p2:keep",
     "due:p2:hold:t2"
   ],
-  "durationMs": 11904,
+  "durationMs": 10765,
   "toolCalls": [
     {
       "tool": "get_schedule",
       "ok": true,
       "input": {},
-      "atMs": 5372
+      "atMs": 2921
     },
     {
       "tool": "get_invoice_status",
@@ -24,7 +24,7 @@
       "input": {
         "step_id": "p2"
       },
-      "atMs": 5485
+      "atMs": 2950
     },
     {
       "tool": "get_dependents",
@@ -32,37 +32,53 @@
       "input": {
         "step_id": "p2"
       },
-      "atMs": 5894
+      "atMs": 3584
     },
     {
       "tool": "list_contract_clauses",
       "ok": true,
       "input": {},
-      "atMs": 5975
+      "atMs": 3591
     },
     {
       "tool": "list_options",
       "ok": true,
       "input": {},
-      "atMs": 6031
+      "atMs": 3598
     },
     {
       "tool": "propose_option",
       "ok": true,
       "input": {
         "option_id": "due:p2:hold:t2",
-        "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should wait until PayPal reports the invoice paid. The hold lifts as soon as payment arrives. Album order is the only task that moves. Engagement shoot and Final shot list are internal work and stay unchanged. Engagement shoot follows the Retainer and Final shot list follows the Balance.",
-        "reminder_note": "Hi! A friendly reminder that your second installment invoice is now due. You can pay it through the PayPal invoice we sent. Once it comes through, we'll move ahead with your album order. Thank you, and please let us know if you have any questions!"
+        "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should not start until PayPal reports the invoice paid. Holding it protects the photographer from paying a vendor out of pocket. Album order is the only task that moves. Engagement shoot (tied to the Retainer) and Final shot list are internal work with no outside cost, so they stay unchanged and are not held.",
+        "not_chosen": [
+          {
+            "option_id": "due:p2:keep",
+            "why": "It would let Album order, which has an outside cost, start while the Second installment is unpaid, so the photographer would carry that cost."
+          }
+        ],
+        "reminder_note": "Hi Kim & Rivera, a friendly reminder that the second installment invoice is now due. When you have a moment, please complete the payment through the PayPal invoice link. Once it is received, we will go ahead with your album order. Thank you so much, and please reach out if you have any questions!",
+        "reminder_clause": "p2"
       },
-      "atMs": 8957
+      "atMs": 7457
     }
   ],
   "choice": {
     "optionId": "due:p2:hold:t2",
-    "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should wait until PayPal reports the invoice paid. The hold lifts as soon as payment arrives. Album order is the only task that moves. Engagement shoot and Final shot list are internal work and stay unchanged. Engagement shoot follows the Retainer and Final shot list follows the Balance.",
-    "reminderNote": "Hi! A friendly reminder that your second installment invoice is now due. You can pay it through the PayPal invoice we sent. Once it comes through, we'll move ahead with your album order. Thank you, and please let us know if you have any questions!"
+    "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should not start until PayPal reports the invoice paid. Holding it protects the photographer from paying a vendor out of pocket. Album order is the only task that moves. Engagement shoot (tied to the Retainer) and Final shot list are internal work with no outside cost, so they stay unchanged and are not held.",
+    "notChosen": [
+      {
+        "optionId": "due:p2:keep",
+        "label": "Proceed as planned",
+        "why": "It would let Album order, which has an outside cost, start while the Second installment is unpaid, so the photographer would carry that cost."
+      }
+    ],
+    "reminderNote": "Hi Kim & Rivera, a friendly reminder that the second installment invoice is now due. When you have a moment, please complete the payment through the PayPal invoice link. Once it is received, we will go ahead with your album order. Thank you so much, and please reach out if you have any questions!",
+    "reminderClause": "p2",
+    "reminderQuote": "40% of the total fee is due 60 days before the event."
   },
-  "modelText": "I proposed holding the Album order until the Second installment is paid, and a human now needs to approve it.\n\n- **Why Album order is held:** The Second installment is due and unpaid. Album order follows that installment and has an outside cost, so the contract ties it to the payment. The hold lifts once PayPal reports the invoice paid.\n- **What stays the same:** Engagement shoot and Final shot list are internal work, so they are not held. Engagement shoot follows the Retainer and Final shot list follows the Balance.\n- **Client reminder:** I attached a short, polite note asking the couple to pay the Second installment through the PayPal invoice. It contains no dates or amounts.",
+  "modelText": "I proposed holding the Album order until the Second installment is paid. A human still has to approve it before anything changes.\n\n- **Why hold it:** The Second installment (contract clause p2) is due and unpaid. Album order follows it and has an outside cost, so it shouldn't start until PayPal shows the invoice as paid.\n- **What stays the same:** Engagement shoot and Final shot list are internal work, so they aren't held.\n- **Option not chosen:** `due:p2:keep` would let Album order start with the invoice still unpaid, so the photographer would carry that cost.\n- **Client reminder:** I attached a short, polite note for Kim & Rivera, based on clause p2. It asks them to pay the invoice through PayPal and says the album order goes ahead once payment arrives.",
   "model": "claude-sonnet-5-5",
   "modelName": "Claude Sonnet",
   "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",

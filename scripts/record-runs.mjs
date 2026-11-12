@@ -124,5 +124,5 @@ if (a) {
 }
 
 // Sample C: only the reading (its clauses add up to 95%, so the server refuses it).
-await record('C')
+if (wanted(readerScene('C'))) await record('C')
 out('done')

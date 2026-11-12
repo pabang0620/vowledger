@@ -1,6 +1,6 @@
 import { HttpError } from '../store.js'
 import { computeSchedule, extendConflict, withExtension } from '../schedule/engine.js'
-import { diffPaypal } from '../schedule/diffPaypal.js'
+import { diffPaypal, changeLine, unchangedDetail } from '../schedule/diffPaypal.js'
 import { modelOf } from '../schedule/model.js'
 import { shortLabel } from '../dates.js'
 import { logActivity } from './contracts.js'
@@ -22,8 +22,8 @@ export function prepareExtend(ctx, contract, stepId, dueDate) {
     type: 'EXTEND_DUE',
     title: `Extend ${step.invoice.number} due ${shortLabel(before)} -> ${shortLabel(dueDate)}?`,
     versioned: true,
-    lines: diff.changes.map((c) => ({ text: c.text, kind: c.kind, stepId: c.stepId })),
-    unchanged: diff.unchanged.map((u) => ({ text: `${u.invoiceNumber} ${u.label} ${u.status}`, stepId: u.stepId })),
+    lines: diff.changes.map(changeLine),
+    unchanged: diff.unchanged.map((u) => ({ text: `${u.invoiceNumber} ${u.label} ${u.status}`, stepId: u.stepId, detail: unchangedDetail(u) })),
     note: `The client asked for more time on "${step.label}". Later payments keep their order and the PayPal invoice is edited with a PUT.`,
     approveLabel: `Approve ${diff.changes.length} PayPal change${diff.changes.length === 1 ? '' : 's'}`,
     payload: { private: { stepId, dueDate }, public: { stepId, dueDate } },

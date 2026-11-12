@@ -9,14 +9,14 @@ export default function AgentPanel({ contract, onApprove, onDismiss, busy }) {
   if (!proposals.length) {
     return (
       <section className="vl-agent vl-quiet" aria-label="Agent">
-        <h3>Agent</h3>
+        <h3><span className="vl-ai" aria-hidden="true">AI</span>Agent</h3>
         <p className="vl-muted">Watching PayPal. When an invoice is paid or an installment falls due, it picks one of the server-computed options here and explains why. It never writes a date: the server does.</p>
       </section>
     )
   }
   return (
     <section className="vl-agent" aria-label="Agent">
-      <h3>Agent</h3>
+      <h3><span className="vl-ai" aria-hidden="true">AI</span>Agent</h3>
       {proposals.map((p) => {
         const card = contract.approvals.find((a) => a.type === 'APPLY_PROPOSAL' && a.payload?.proposalId === p.id && a.status === 'pending')
         const step = contract.steps.find((s) => s.id === p.trigger.stepId)
@@ -29,6 +29,11 @@ export default function AgentPanel({ contract, onApprove, onDismiss, busy }) {
             </p>
             <p className="vl-proposal-pick">Option chosen: <strong>{p.label}</strong></p>
             <p>{p.reason}</p>
+            {p.notChosen?.length > 0 && (
+              <ul className="vl-lines vl-muted vl-fine" aria-label="Options the agent did not choose">
+                {p.notChosen.map((n) => <li key={n.optionId}>Not chosen: <strong>{n.label}</strong>. {n.why}</li>)}
+              </ul>
+            )}
             {p.changes?.length > 0 && (
               <ul className="vl-lines vl-changes" aria-label="Dates this option changes">
                 {p.changes.map((c) => <li key={c.id}>{c.text}</li>)}

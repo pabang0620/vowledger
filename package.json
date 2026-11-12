@@ -17,6 +17,7 @@
     "demo:sandbox": "vite build && FORCE_MOCK=0 FORCE_MOCK_PAYPAL=0 REQUIRE_SANDBOX=1 node server/index.js",
     "test": "FORCE_MOCK=1 node --test test/*.test.js",
     "check:bryntum": "node scripts/check-bryntum.mjs",
+    "shots:readme": "node scripts/readme-shots.mjs",
     "record:runs": "FORCE_MOCK=1 FORCE_MOCK_PAYPAL=1 node scripts/record-runs.mjs"
   },
   "dependencies": {

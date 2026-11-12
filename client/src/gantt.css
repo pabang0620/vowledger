@@ -1,0 +1,73 @@
+/* Bryntum Gantt on the svalbard-light theme, tuned through Bryntum 7's own CSS variables (design option 2).
+   The theme sets them on :root:not(.b-nothing); the extra :root raises specificity so these win. */
+:root:root:not(.b-nothing) {
+  --b-primary: #1d6fe0;
+  --b-secondary: #c2410c;
+  --b-widget-border-radius: 8px;
+  --b-grid-background: #ffffff;
+  --b-grid-cell-color: #0c1b2e;
+  --b-grid-cell-font-size: 13px;
+  --b-grid-cell-font-weight: 600;
+  --b-grid-cell-padding-inline: 16px;
+  --b-grid-cell-border-color: #eef1f5;
+  --b-grid-header-background: #ffffff;
+  --b-grid-header-color: #5a6779;
+  --b-grid-header-border-color: #e3e8ef;
+  --b-grid-header-font-weight: 600;
+  --b-grid-header-font-size: 12px;
+  --b-column-lines-tick-color: #f2f4f8;
+  --b-column-lines-major-color: #e3e8ef;
+  --b-gantt-task-primary: #7aa7e8;
+  --b-gantt-milestone-primary: #1d6fe0;
+  --b-gantt-inactive-task-color: #9aa6b6;
+  --b-gantt-task-border-radius: 999px;
+  --b-gantt-task-box-shadow: none;
+  --b-gantt-task-font-size: 12px;
+  --b-gantt-task-font-weight: 600;
+  --b-baseline-background: #cbd5e1;
+  --b-baseline-border-color: transparent;
+  --b-baseline-border-width: 0;
+  --b-baseline-border-radius: 999px;
+}
+.vl-gantt { width: 100%; min-width: 0; position: relative; font-family: var(--font-body); }
+.vl-gantt .b-widget, .vl-gantt .b-grid-cell, .vl-gantt .b-sch-header-text { font-family: var(--font-body); }
+.vl-gantt.vl-busy { opacity: 0.7; pointer-events: none; }
+
+/* Task states, set through Bryntum's own event colour variable so bars and milestone diamonds both follow.
+   A pin is a payment that is sent or paid; a chain is a task that follows one. */
+.b-gantt .b-gantt-task.vl-pinned { --b-sch-event-background: var(--st-held); }
+.b-gantt .b-gantt-task.vl-chained { --b-sch-event-background: var(--b-gantt-inactive-task-color); }
+.b-gantt .b-gantt-task.vl-paid { --b-sch-event-background: var(--st-captured); }
+.b-gantt .b-gantt-task.vl-unsynced { --b-sch-event-background: var(--st-failed); }
+.b-gantt .b-gantt-task.vl-held { --b-sch-event-background: repeating-linear-gradient(45deg, #c9a227 0 6px, #e0bf55 6px 12px); }
+.b-gantt .b-gantt-task.vl-event { --b-sch-event-background: var(--accent); }
+.b-gantt .b-gantt-task.b-milestone.vl-payment:not(.vl-pinned):not(.vl-paid):not(.vl-unsynced) { --b-sch-event-background: var(--b-gantt-milestone-primary); }
+.b-gantt .b-gantt-task { min-width: 12px; }
+.vl-gantt .b-icon-tree-leaf, .vl-gantt .b-tree-leaf-cell .b-tree-cell-inner:before { display: none; }
+.b-gantt .b-grid-row[data-id="event"] .b-grid-cell { color: var(--accent); font-weight: 800; letter-spacing: 0.04em; }
+
+.vl-ico { margin-right: 6px; font-size: 12px; }
+.vl-ico-pin { color: var(--st-captured); }
+.vl-ico-chain { color: var(--b-gantt-inactive-task-color); }
+.vl-ico-issue { color: var(--st-pending); }
+.vl-ico-bad { color: var(--bad); margin-left: 2px; }
+.vl-ico-wait { color: var(--warn); margin-left: 2px; }
+.vl-legend .vl-ico { margin: 0 4px 0 0; }
+.vl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Baselines: thin grey pill = previous plan, orange dashed = the agent's proposal. */
+.b-gantt .b-task-baseline { height: 6px; min-width: 18px; overflow: visible; }
+.b-gantt .b-task-baseline.vl-bl-previous { background: var(--b-baseline-background); border-radius: 999px; }
+.b-gantt .b-task-baseline.vl-bl-proposal { height: 9px; background: rgba(217, 119, 6, 0.15); border: 2px dashed var(--proposal); border-radius: 999px; }
+.vl-bl-label { position: absolute; left: 100%; top: -4px; padding-left: 8px; white-space: nowrap; font-size: 11px; line-height: 12px; color: #7b8798; font-weight: 500; }
+.vl-bl-label-proposal { color: #b45309; font-weight: 700; }
+
+/* Today and the wedding day */
+.b-gantt .vl-range-today { background: rgba(29, 111, 224, 0.06); border-left: 2px solid var(--st-pending); color: var(--st-pending); }
+.b-gantt .vl-range-wedding { background: rgba(194, 65, 12, 0.07); border-left: 2px solid var(--accent); color: var(--accent); }
+.b-gantt .vl-ind-issue { color: var(--st-pending); }
+
+/* The plan slides from the old place when a proposal or a move is applied */
+@keyframes vl-slide-in { from { transform: translateX(-28px); opacity: 0.35; } to { transform: none; opacity: 1; } }
+.b-gantt .b-gantt-task.vl-moved { animation: vl-slide-in 0.6s ease-out; }
+@media (prefers-reduced-motion: reduce) { .b-gantt .b-gantt-task.vl-moved { animation: none; } }

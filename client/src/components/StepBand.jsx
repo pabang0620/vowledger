@@ -10,9 +10,10 @@ export default function StepBand({ contract }) {
   const current = items.find((i) => !i.done)?.n
   return (
     <ol className="vl-steps" aria-label="Demo steps">
-      {items.map((i) => (
+      {items.map((i, k) => (
         <li key={i.n} className={i.done ? 'is-done' : i.n === current ? 'is-current' : ''}>
-          <span className="vl-step-mark">{i.done ? '\u2713' : i.n}</span>
+          {k > 0 && <span className="vl-step-line" aria-hidden="true" />}
+          <span className="vl-step-mark">{i.done ? '✓' : i.n}</span>
           {i.text}
         </li>
       ))}

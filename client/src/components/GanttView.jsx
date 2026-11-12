@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect } from 'react'
 import { BryntumGantt } from '@bryntum/gantt-react'
 import '@bryntum/gantt/gantt.css'
-import '@bryntum/gantt/stockholm-light.css'
+import '@bryntum/gantt/svalbard-light.css'
 import '@bryntum/gantt/fontawesome/css/fontawesome.css'
 import '@bryntum/gantt/fontawesome/css/solid.css'
 import { toIso, parseIso, short } from '../dates.js'
@@ -75,7 +75,7 @@ const indicatorItems = {
   issueDate: (task) => (task.issueDate ? { startDate: task.issueDate, name: `PayPal sends ${short(toIso(task.issueDate))}`, iconCls: 'fa fa-paper-plane', cls: 'vl-ind-issue' } : null),
 }
 
-export default function GanttView({ gantt, busy, readOnly = false, onMoveEvent, onExtend }) {
+export default function GanttView({ gantt, busy, readOnly = false, onMoveEvent, onExtend, toolbar = null, banner = null }) {
   const ref = useRef(null)
   const lastDrag = useRef(null)
   const ganttKey = useMemo(() => JSON.stringify([gantt.rows, gantt.dependencies]), [gantt])
@@ -124,9 +124,13 @@ export default function GanttView({ gantt, busy, readOnly = false, onMoveEvent, 
   return (
     <div className="vl-gantt-wrap">
       <div className="vl-jump">
-        <button type="button" className="vl-link" onClick={() => jump('p1')}>Jump to the first payment</button>
-        <button type="button" className="vl-link" onClick={() => jump('event')}>Jump to the wedding day</button>
+        <div className="vl-seg" role="group" aria-label="Scroll the Gantt">
+          <button type="button" onClick={() => jump('p1')}>Jump to the first payment</button>
+          <button type="button" onClick={() => jump('event')}>Jump to the wedding day</button>
+        </div>
+        {toolbar}
       </div>
+      {banner}
       <div className={busy ? 'vl-gantt vl-busy' : 'vl-gantt'} style={{ height }}>
         <BryntumGantt
           key={ganttKey}

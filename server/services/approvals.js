@@ -4,7 +4,7 @@ import { dueForPaypal, extendConflict, isPinned, moveConflict, withExtension } f
 import { modelOf } from '../schedule/model.js'
 import { shortLabel } from '../dates.js'
 import { usd } from '../schedule/compute.js'
-import { bumpPlan, logActivity, scheduleOf } from './contracts.js'
+import { bumpPlan, logActivity, scheduleOf, isObsoleteReminder } from './contracts.js'
 import { createAndSend, editDates } from './invoiceOps.js'
 import { createDeposit, captureDeposit } from './deposits.js'
 import { newApproval } from './approvalFactory.js'
@@ -202,6 +202,10 @@ export async function executeApproval(ctx, session, contractId, approvalId) {
   if (!approval) throw new HttpError(404, 'Approval not found.')
   if (approval.status !== 'pending') throw new HttpError(409, `This card is already ${approval.status}.`)
   if (approval.versioned && approval.planVersion !== contract.planVersion) throw new HttpError(409, 'Plan changed, recalculate.')
+  if (isObsoleteReminder(contract, approval)) {
+    approval.status = 'cancelled'
+    throw new HttpError(409, 'That installment is already paid, so no reminder is needed.')
+  }
   // Claim the card before any await: a second click or a second tab cannot run it twice.
   approval.status = 'executing'
   let outcome

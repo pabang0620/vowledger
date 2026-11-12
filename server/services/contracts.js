@@ -104,20 +104,19 @@ export function publicContract(ctx, contract) {
     gantt: ganttData(contract, shown, { baseline0: movePreview ? schedule : contract.baseline0, proposal: pendingProposal && !pendingProposal.stale ? pendingProposal : null, today }),
     steps: contract.steps.map((s) => ({ id: s.id, kind: s.kind, label: s.label, percent: s.percent, amountCents: s.amountCents, quote: s.quote, via: s.via || 'invoice', deposit: publicDeposit(s), invoice: s.invoice && { id: s.invoice.id, number: s.invoice.number, status: s.invoice.status, remote: s.invoice.remote, syncState: s.invoice.syncState, paidCents: s.invoice.paidCents || 0 } })),
     proposals: contract.proposals.map(publicProposal),
-    approvals: [...contract.approvals.values()].map(publicApproval).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    approvals: [...contract.approvals.values()].filter((a) => !isObsoleteReminder(contract, a)).map(publicApproval).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     jobs: contract.jobs.map((j) => ({ id: j.id, approvalId: j.approvalId, status: j.status, items: j.items })),
     activity: contract.activity,
   }
 }
 
 // The three demo steps, decided by the server so the guide band and the tests read the same truth.
-// 1: every contract payment has an invoice or a checkout order. 2: some payment is paid. 3: a wedding move was approved.
+// 1: every contract payment has an invoice or a checkout order. 2: the deposit (first installment) is paid in full. 3: a wedding move was approved.
 export function stepsDone(contract) {
   const installments = contract.steps.filter((s) => s.kind === 'installment')
-  const partly = (s) => Boolean(s.invoice && s.invoice.status === 'PARTIALLY_PAID')
   return {
     created: installments.length > 0 && installments.every((s) => s.invoice || s.deposit || s.depositUnknown),
-    paid: installments.some((s) => isPaid(s) || partly(s)),
+    paid: installments.length > 0 && isPaid(installments[0]),
     moved: [...contract.approvals.values()].some((a) => a.type === 'MOVE_EVENT' && ['done', 'partial'].includes(a.status)),
   }
 }
@@ -131,6 +130,13 @@ function publicDeposit(step) {
 export function publicProposal(p) {
   const { schedule, adjustments, ...rest } = p
   return { ...rest, tasks: schedule.tasks.map((t) => ({ id: t.id, name: t.name, startDate: t.startDate, endDate: t.endDate })) }
+}
+
+// A reminder card is only useful while its installment is unpaid; once paid the server stops offering it.
+export function isObsoleteReminder(contract, approval) {
+  if (approval.type !== 'REMINDER' || approval.status !== 'pending') return false
+  const step = contract.steps.find((s) => s.id === approval.payload?.private?.stepId)
+  return !step || isPaid(step)
 }
 
 export function publicApproval(a) {
