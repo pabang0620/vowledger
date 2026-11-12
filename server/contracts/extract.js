@@ -5,7 +5,9 @@ import { ContractError, clauseSchema, buildSteps } from '../schedule/compute.js'
 import { isValidIso, addDays, diffDays } from '../dates.js'
 import { recording, readerScene, recordingLabel } from '../builtin/recordings.js'
 import { readContractMock } from './mockReader.js'
+import { attemptLive } from '../llmGuard.js'
 import { runAccountTools } from '../agent/accountRunner.js'
+import { callRequiredTool } from '../llm/requireTool.js'
 
 const readSchema = z.object({
   couple: z.string().min(1).max(80).optional(),
@@ -74,19 +76,14 @@ export async function readContractAccount(text, trace = {}) {
   return found
 }
 
-async function readContractLive(text) {
-  const client = new Anthropic({ apiKey: config.anthropicKey })
-  const response = await client.messages.create({
+export async function readContractLive(text, client = new Anthropic({ apiKey: config.anthropicKey })) {
+  return callRequiredTool(client, {
     model: config.anthropicModel,
     max_tokens: 4000,
     system: READ_SYSTEM,
     tools: [READ_TOOL],
-    tool_choice: { type: 'tool', name: READ_TOOL.name },
     messages: [{ role: 'user', content: text }],
-  })
-  const use = response.content.find((b) => b.type === 'tool_use')
-  if (!use) throw new ContractError('The reader returned no payment terms.')
-  return use.input
+  }, READ_TOOL.name)
 }
 
 // Quotes must exist in the contract, and each percent must appear in its quote. Otherwise it is not a reading, it is a guess.
@@ -148,12 +145,25 @@ export function recordedReading(sampleKey, text, today) {
 const SOURCES = { live: 'claude', account: 'claude-account', mock: 'mock-reader' }
 const SOURCE_LABELS = { claude: 'Claude (API key)', 'claude-account': 'Claude Sonnet (local account)', 'mock-reader': 'the rule-based reader' }
 
+// Exported so tests can swap in a fake model; nothing else touches it.
+export const LIVE_READERS = { live: readContractLive, account: readContractAccount }
+
 export async function readContract(text, { edits = [], offline = false, sampleKey = null, today = null } = {}) {
   const mode = offline ? 'mock' : modes.llm
-  const replay = mode === 'mock' && !offline ? recordedReading(sampleKey, text, today) : null
-  if (replay) return { ...acceptReading(replay.raw, text, edits), source: 'recorded-claude', sourceLabel: replay.label }
-  const readers = { live: readContractLive, account: readContractAccount, mock: async (t) => readContractMock(t) }
-  const raw = await readers[mode](text)
-  const source = SOURCES[mode]
-  return { ...acceptReading(raw, text, edits), source, sourceLabel: SOURCE_LABELS[source] }
+  let fallbackReason = null
+  if (mode === 'live' || mode === 'account') {
+    const run = LIVE_READERS[mode]
+    // Only the hosted key path is capped; the local account backend is the developer's own login.
+    const attempt = await attemptLive(() => run(text), mode === 'live' ? {} : { limiter: { take: () => true } })
+    if (attempt.out) {
+      const source = SOURCES[mode]
+      return { ...acceptReading(attempt.out, text, edits), source, sourceLabel: SOURCE_LABELS[source] }
+    }
+    fallbackReason = attempt.reason
+  }
+  const because = fallbackReason ? ` (${fallbackReason})` : ''
+  const replay = !offline ? recordedReading(sampleKey, text, today) : null
+  if (replay) return { ...acceptReading(replay.raw, text, edits), source: 'recorded-claude', sourceLabel: `${replay.label}${because}` }
+  const label = fallbackReason ? `Rule-based stand-in${because}` : SOURCE_LABELS['mock-reader']
+  return { ...acceptReading(readContractMock(text), text, edits), source: 'mock-reader', sourceLabel: label }
 }

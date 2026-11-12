@@ -18,7 +18,10 @@ const VIA_LABELS = { 'mock-agent': 'Rule-based agent', claude: 'Claude (API key)
 
 // Who made the pick, in words a judge can trust: a replay names the recorded run and its date.
 function viaLabel(agent) {
-  return agent.recording?.label || VIA_LABELS[agent.via] || agent.via
+  const because = agent.fallbackReason ? ` (${agent.fallbackReason})` : ''
+  if (agent.recording?.label) return `${agent.recording.label}${because}`
+  if (agent.fallbackReason && agent.via === 'mock-agent') return `Rule-based stand-in${because}`
+  return VIA_LABELS[agent.via] || agent.via
 }
 
 // Two entrances, one exit. A payment event or a dragged wedding date becomes server-computed options;

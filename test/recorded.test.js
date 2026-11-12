@@ -125,6 +125,6 @@ test('sandbox evidence lists as PASS only items VERIFY.md records as PASS', () =
     assert.match(section.slice(0, 200), /\*\*Result 2026-11-12: PASS/, `${id} must be PASS in VERIFY.md`)
   }
   for (const item of SANDBOX_EVIDENCE.notRun.filter((i) => !i.id.includes('step'))) {
-    assert.match((verify.split(`## ${item.id} `)[1] || '').slice(0, 200), /SKIPPED/)
+    assert.match(((verify.split(`## ${item.id} `)[1] || '').split('\n## ')[0]), /SKIPPED/)
   }
 })

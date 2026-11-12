@@ -97,7 +97,12 @@ Without keys the app runs on a **mock PayPal** that returns Invoicing v2 shapes 
 | `LLM_BACKEND` | `account` runs Claude through your own Claude Code login (local development only, never an API key); the UI then says "Claude Sonnet (local account)" | empty |
 | `FORCE_MOCK` | `1` ignores all keys and the account backend | 0 |
 | `FORCE_MOCK_PAYPAL` | `1` keeps PayPal on the mock while the model runs | 0 |
+| `LLM_LIVE_PER_IP_HOUR` | live Claude runs allowed per client IP per hour (one run is one user action: a contract reading or an agent decision) | 10 |
+| `LLM_LIVE_PER_DAY` | live Claude runs allowed per host per day (rolling 24 hours) | 150 |
+| `TRUST_PROXY_HOPS` | proxies in front of the app, so the per-IP cap sees the real client IP; `0` trusts no forwarded header | 1 |
 | `PORT` | server port | 3002 |
+
+When the live model errors (network, 4xx/5xx, timeout, credit exhausted) or either cap is reached, the action still completes: it uses the recorded real run for that scene when one exists, otherwise the rule-based stand-in. The screen says which and why, for example "Recorded run: Claude Sonnet, 2026-11-12 (live limit reached)" or "Rule-based stand-in (live model unavailable)". A raw API error is never shown.
 
 ## Testing instructions
 

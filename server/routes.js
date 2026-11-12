@@ -12,6 +12,7 @@ import { prepareMove, handleInvoiceEvent, pollContract } from './services/trigge
 import { prepareExtend } from './services/extension.js'
 import { isValidIso } from './dates.js'
 import { recordingsSummary } from './builtin/recordings.js'
+import { withClient } from './llmGuard.js'
 import { SANDBOX_EVIDENCE } from './builtin/sandboxEvidence.js'
 
 const idSchema = z.string().uuid()
@@ -26,6 +27,7 @@ function parse(schema, data) {
 
 export function createApi(ctx) {
   const api = Router()
+  api.use((req, res, next) => withClient(req.ip, next))
 
   const sessionOf = (req) => {
     const header = req.get('x-session-id')

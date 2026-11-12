@@ -20,6 +20,7 @@ const app = express()
 const distDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
 
 app.disable('x-powered-by')
+app.set('trust proxy', config.trustProxyHops)
 app.use(express.json({ limit: '60kb' }))
 app.use('/api', createApi(ctx))
 // The mock stand-in for PayPal's hosted checkout page exists only when no sandbox keys are set.
