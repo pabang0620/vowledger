@@ -1,0 +1,64 @@
+{
+  "scene": "agent-B-PAID-p1",
+  "kind": "agent",
+  "sampleKey": "B",
+  "trigger": {
+    "kind": "PAID",
+    "stepId": "p1"
+  },
+  "optionIds": [
+    "paid:p1:keep",
+    "paid:p1:pull:t1"
+  ],
+  "durationMs": 8494,
+  "toolCalls": [
+    {
+      "tool": "get_dependents",
+      "ok": true,
+      "input": {
+        "step_id": "p1"
+      },
+      "atMs": 3753
+    },
+    {
+      "tool": "get_invoice_status",
+      "ok": true,
+      "input": {
+        "step_id": "p1"
+      },
+      "atMs": 4212
+    },
+    {
+      "tool": "list_options",
+      "ok": true,
+      "input": {},
+      "atMs": 4221
+    },
+    {
+      "tool": "get_schedule",
+      "ok": true,
+      "input": {},
+      "atMs": 4232
+    },
+    {
+      "tool": "propose_option",
+      "ok": true,
+      "input": {
+        "option_id": "paid:p1:pull:t1",
+        "reason": "The first payment is confirmed. The \"Engagement shoot\" follows it and is internal work with no outside cost, so it can start early instead of waiting. Only \"Engagement shoot\" moves. \"Album order\" and \"Final shot list\" stay where they are."
+      },
+      "atMs": 5823
+    }
+  ],
+  "choice": {
+    "optionId": "paid:p1:pull:t1",
+    "reason": "The first payment is confirmed. The \"Engagement shoot\" follows it and is internal work with no outside cost, so it can start early instead of waiting. Only \"Engagement shoot\" moves. \"Album order\" and \"Final shot list\" stay where they are.",
+    "reminderNote": null
+  },
+  "modelText": "I proposed starting the \"Engagement shoot\" early, and a human now has to approve it before anything changes.\n\nThe first payment is confirmed as paid. The \"Engagement shoot\" follows it and is internal work with no outside cost, so nothing stops it from starting sooner.\n\n\"Album order\" and \"Final shot list\" stay where they are.",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",
+  "recordedOn": "2026-11-12",
+  "recordedToday": "2026-11-12"
+}

@@ -1,0 +1,71 @@
+{
+  "scene": "agent-A-DUE_UNPAID-p2",
+  "kind": "agent",
+  "sampleKey": "A",
+  "trigger": {
+    "kind": "DUE_UNPAID",
+    "stepId": "p2"
+  },
+  "optionIds": [
+    "due:p2:keep",
+    "due:p2:hold:t2"
+  ],
+  "durationMs": 11904,
+  "toolCalls": [
+    {
+      "tool": "get_schedule",
+      "ok": true,
+      "input": {},
+      "atMs": 5372
+    },
+    {
+      "tool": "get_invoice_status",
+      "ok": true,
+      "input": {
+        "step_id": "p2"
+      },
+      "atMs": 5485
+    },
+    {
+      "tool": "get_dependents",
+      "ok": true,
+      "input": {
+        "step_id": "p2"
+      },
+      "atMs": 5894
+    },
+    {
+      "tool": "list_contract_clauses",
+      "ok": true,
+      "input": {},
+      "atMs": 5975
+    },
+    {
+      "tool": "list_options",
+      "ok": true,
+      "input": {},
+      "atMs": 6031
+    },
+    {
+      "tool": "propose_option",
+      "ok": true,
+      "input": {
+        "option_id": "due:p2:hold:t2",
+        "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should wait until PayPal reports the invoice paid. The hold lifts as soon as payment arrives. Album order is the only task that moves. Engagement shoot and Final shot list are internal work and stay unchanged. Engagement shoot follows the Retainer and Final shot list follows the Balance.",
+        "reminder_note": "Hi! A friendly reminder that your second installment invoice is now due. You can pay it through the PayPal invoice we sent. Once it comes through, we'll move ahead with your album order. Thank you, and please let us know if you have any questions!"
+      },
+      "atMs": 8957
+    }
+  ],
+  "choice": {
+    "optionId": "due:p2:hold:t2",
+    "reason": "The Second installment (contract section p2) is due and still unpaid. The Album order task follows that installment and has an outside cost, so it should wait until PayPal reports the invoice paid. The hold lifts as soon as payment arrives. Album order is the only task that moves. Engagement shoot and Final shot list are internal work and stay unchanged. Engagement shoot follows the Retainer and Final shot list follows the Balance.",
+    "reminderNote": "Hi! A friendly reminder that your second installment invoice is now due. You can pay it through the PayPal invoice we sent. Once it comes through, we'll move ahead with your album order. Thank you, and please let us know if you have any questions!"
+  },
+  "modelText": "I proposed holding the Album order until the Second installment is paid, and a human now needs to approve it.\n\n- **Why Album order is held:** The Second installment is due and unpaid. Album order follows that installment and has an outside cost, so the contract ties it to the payment. The hold lifts once PayPal reports the invoice paid.\n- **What stays the same:** Engagement shoot and Final shot list are internal work, so they are not held. Engagement shoot follows the Retainer and Final shot list follows the Balance.\n- **Client reminder:** I attached a short, polite note asking the couple to pay the Second installment through the PayPal invoice. It contains no dates or amounts.",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",
+  "recordedOn": "2026-11-12",
+  "recordedToday": "2026-11-12"
+}

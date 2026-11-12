@@ -1,0 +1,120 @@
+import { scheduleOf } from '../services/contracts.js'
+import { depositLabel } from '../schedule/depositStatus.js'
+
+// Tools the model can call. Read tools plus propose_option. There is no tool that moves money or writes a date.
+
+export class ToolError extends Error {}
+
+const ISO_IN_TEXT = /\d{4}-\d{2}-\d{2}/
+const MOVE_WORDS = /\b(move|moves|moved|moving|shift|shifts|shifted|shifting|slide|slides|reschedul\w*|later|earlier)\b/i
+const STAY_WORDS = /\b(not|never|stay|stays|unchanged|pinned|fixed|keeps? (its|their) (dates?|place))\b|n't\b/i
+
+// Which tasks an option moves and which it leaves alone, compared with the confirmed schedule.
+function taskEffect(now, option) {
+  const was = new Map(now.tasks.map((t) => [t.id, t.startDate]))
+  const moving = option.schedule.tasks.filter((t) => was.get(t.id) !== t.startDate).map((t) => t.name)
+  const unchanged = option.schedule.tasks.filter((t) => was.get(t.id) === t.startDate).map((t) => t.name)
+  return { moving, unchanged }
+}
+
+// The reason must not say that a task moves when the chosen option leaves it where it is (for example a task tied to a
+// captured deposit when the wedding moves). Checked per sentence: a sentence with a move word may not name an unchanged
+// task, unless it is a "does not move" sentence that names no moving task.
+export function misnamedTasks(reason, effect) {
+  const bad = new Set()
+  for (const sentence of reason.split(/(?<=[.!?;])\s+/)) {
+    if (!MOVE_WORDS.test(sentence)) continue
+    const names = effect.unchanged.filter((n) => sentence.toLowerCase().includes(n.toLowerCase()))
+    if (!names.length) continue
+    const namesMoving = effect.moving.some((n) => sentence.toLowerCase().includes(n.toLowerCase()))
+    if (STAY_WORDS.test(sentence) && !namesMoving) continue
+    names.forEach((n) => bad.add(n))
+  }
+  return [...bad]
+}
+
+export const TOOL_DEFS = [
+  { name: 'get_invoice_status', description: 'Status and PayPal dates of the invoice for one payment step.', input_schema: { type: 'object', properties: { step_id: { type: 'string' } }, required: ['step_id'] } },
+  { name: 'get_schedule', description: 'The current confirmed schedule: payments and production tasks with their dates. followsWedding / movesWithWedding say whether an item is counted back from the wedding date (it moves when the wedding moves) or is tied to a sent or paid payment (it never moves).', input_schema: { type: 'object', properties: {} } },
+  { name: 'get_dependents', description: 'Production tasks that follow a payment step, with whether they cost outside money.', input_schema: { type: 'object', properties: { step_id: { type: 'string' } }, required: ['step_id'] } },
+  { name: 'list_contract_clauses', description: 'Contract clauses with their exact quotes. Optional topic filter.', input_schema: { type: 'object', properties: { topic: { type: 'string' } } } },
+  { name: 'list_options', description: 'The choices the server computed for this event, each with the schedule it would produce and the task names it moves and leaves unchanged. Pick from these ids only.', input_schema: { type: 'object', properties: {} } },
+  {
+    name: 'propose_option',
+    description: 'Choose one option id from list_options and explain why in plain words. Do not write dates or amounts in the reason: refer to tasks and contract sections. Only say a task moves if it is in that option\'s movingTasks; name unchanged tasks in a separate sentence. The server draws the chosen schedule and asks a human to approve.',
+    input_schema: {
+      type: 'object',
+      properties: { option_id: { type: 'string' }, reason: { type: 'string' }, reminder_note: { type: 'string', description: 'Only for an unpaid installment: a short polite note for the client' } },
+      required: ['option_id', 'reason'],
+    },
+  },
+]
+
+export function buildTools(ctx, contract, trigger, options, sink) {
+  const find = (id) => contract.steps.find((s) => s.id === id)
+  const now = scheduleOf(ctx, contract)
+  const effects = new Map(options.map((o) => [o.id, taskEffect(now, o)]))
+  return {
+    get_invoice_status({ step_id }) {
+      const step = find(step_id)
+      if (!step) throw new ToolError(`Unknown step ${step_id}`)
+      if (step.deposit) return { step_id, number: 'Deposit', status: depositLabel(step), issueDate: step.deposit.issueDate, dueDate: step.deposit.dueDate, paidCents: step.deposit.status === 'COMPLETED' ? step.amountCents : 0 }
+      if (!step.invoice) return { step_id, invoice: null }
+      const { number, status, remote, paidCents } = step.invoice
+      return { step_id, number, status, issueDate: remote.issueDate, dueDate: remote.dueDate, paidCents }
+    },
+    get_schedule() {
+      const s = scheduleOf(ctx, contract)
+      return {
+        eventDate: s.eventDate,
+        steps: s.steps.map((x) => ({ id: x.id, label: x.label, dueDate: x.dueDate, pinned: x.pinned, paid: x.paid, followsWedding: x.follows })),
+        tasks: s.tasks.map((t) => ({ id: t.id, name: t.name, after: t.after, startDate: t.startDate, endDate: t.endDate, cost: t.cost, movesWithWedding: !t.fixed, tiedToPinnedPayment: t.pinnedChain, waitsForPayment: t.waitsFor })),
+      }
+    },
+    get_dependents({ step_id }) {
+      return scheduleOf(ctx, contract).tasks.filter((t) => t.after === step_id).map((t) => ({ id: t.id, name: t.name, cost: t.cost, startDate: t.startDate }))
+    },
+    list_contract_clauses({ topic } = {}) {
+      const all = [
+        ...contract.steps.filter((s) => s.kind === 'installment').map((s) => ({ id: s.id, label: s.label, quote: s.quote })),
+        ...(contract.dateChangeFee ? [{ id: 'date_change', label: 'Date change fee', quote: contract.dateChangeFee.quote }] : []),
+      ]
+      if (!topic) return all
+      const t = topic.toLowerCase()
+      return all.filter((c) => c.label.toLowerCase().includes(t) || c.quote.toLowerCase().includes(t))
+    },
+    list_options() {
+      return options.map((o) => ({
+        id: o.id,
+        label: o.label,
+        description: o.description,
+        resultTasks: o.schedule.tasks.map((t) => ({ id: t.id, name: t.name, startDate: t.startDate, endDate: t.endDate })),
+        movingTasks: effects.get(o.id).moving,
+        unchangedTasks: effects.get(o.id).unchanged,
+        feeCents: o.feeCents,
+      }))
+    },
+    propose_option({ option_id, reason, reminder_note }) {
+      if (typeof option_id !== 'string' || ISO_IN_TEXT.test(option_id)) throw new ToolError('option_id must be an id returned by list_options, not a date.')
+      if (!options.some((o) => o.id === option_id)) throw new ToolError(`Unknown option_id "${option_id}". Valid ids: ${options.map((o) => o.id).join(', ')}`)
+      if (typeof reason !== 'string' || reason.trim().length < 5 || reason.length > 800) throw new ToolError('reason must be 5 to 800 characters.')
+      if (ISO_IN_TEXT.test(reason)) throw new ToolError('Do not write dates in the reason. Refer to tasks and contract sections; the server shows the dates.')
+      const wrong = misnamedTasks(reason, effects.get(option_id))
+      if (wrong.length) throw new ToolError(`The reason says ${wrong.map((n) => `"${n}"`).join(', ')} moves, but this option leaves ${wrong.length === 1 ? 'it' : 'them'} unchanged. Tasks this option moves: ${effects.get(option_id).moving.join(', ') || 'none'}. Name unchanged tasks in their own sentence.`)
+      if (reminder_note && (reminder_note.length > 600 || ISO_IN_TEXT.test(reminder_note))) throw new ToolError('reminder_note must be under 600 characters and contain no dates.')
+      sink.choice = { optionId: option_id, reason: reason.trim(), reminderNote: reminder_note?.trim() || null }
+      return { ok: true, message: 'Proposal recorded. A human must approve it before anything changes.' }
+    },
+  }
+}
+
+export async function runToolSafely(handlers, name, input) {
+  const fn = handlers[name]
+  if (!fn) return { ok: false, result: { error: `Unknown tool ${name}` } }
+  try {
+    return { ok: true, result: await fn(input || {}) }
+  } catch (err) {
+    if (err instanceof ToolError) return { ok: false, result: { error: err.message } }
+    throw err
+  }
+}

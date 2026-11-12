@@ -1,0 +1,54 @@
+{
+  "scene": "agent-B-MOVE",
+  "kind": "agent",
+  "sampleKey": "B",
+  "trigger": {
+    "kind": "MOVE",
+    "shiftDays": 49
+  },
+  "optionIds": [
+    "move:fee-add",
+    "move:fee-skip"
+  ],
+  "durationMs": 10847,
+  "toolCalls": [
+    {
+      "tool": "get_schedule",
+      "ok": true,
+      "input": {},
+      "atMs": 5798
+    },
+    {
+      "tool": "list_options",
+      "ok": true,
+      "input": {},
+      "atMs": 5852
+    },
+    {
+      "tool": "list_contract_clauses",
+      "ok": true,
+      "input": {},
+      "atMs": 5926
+    },
+    {
+      "tool": "propose_option",
+      "ok": true,
+      "input": {
+        "option_id": "move:fee-add",
+        "reason": "The contract has a Date change fee clause (date_change), which says moving the event date after signing carries a change fee, due on the day the new date is confirmed. So I chose the option that adds the fee. Two tasks are counted back from the wedding date and move with it: Album order and Final shot list. The second installment and balance payments follow the new date as well, per the Second installment and Balance clauses. Engagement shoot does not move. It is tied to the Retainer, which is already paid, so it stays where it is."
+      },
+      "atMs": 8264
+    }
+  ],
+  "choice": {
+    "optionId": "move:fee-add",
+    "reason": "The contract has a Date change fee clause (date_change), which says moving the event date after signing carries a change fee, due on the day the new date is confirmed. So I chose the option that adds the fee. Two tasks are counted back from the wedding date and move with it: Album order and Final shot list. The second installment and balance payments follow the new date as well, per the Second installment and Balance clauses. Engagement shoot does not move. It is tied to the Retainer, which is already paid, so it stays where it is.",
+    "reminderNote": null
+  },
+  "modelText": "I proposed the option that moves the wedding date and adds the change fee (`move:fee-add`). A human still has to approve it before anything changes.\n\n- **Why the fee:** The contract's Date change fee clause (`date_change`) says moving the date after signing carries a fee, due on the day the new date is confirmed.\n- **What moves:** Album order and Final shot list are counted back from the wedding date, so both shift with it. The Second installment and Balance payments also follow the new date.\n- **What stays put:** Engagement shoot doesn't move. It is tied to the Retainer, which is already paid.\n\nI didn't include any dates or amounts in the reason, since the server owns those.",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",
+  "recordedOn": "2026-11-12",
+  "recordedToday": "2026-11-12"
+}

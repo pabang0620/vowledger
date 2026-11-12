@@ -1,0 +1,60 @@
+{
+  "scene": "reader-C",
+  "kind": "reader",
+  "sampleKey": "C",
+  "durationMs": 9117,
+  "toolCalls": [
+    {
+      "tool": "submit_contract_terms",
+      "input": {
+        "couple": "Novak & Daniels",
+        "client": {
+          "given": "Ana",
+          "surname": "Novak",
+          "email": "novak.daniels@example.com"
+        },
+        "eventDate": "2027-04-11",
+        "signedOn": "2026-11-12",
+        "totalCents": 480000,
+        "totalQuote": "The total fee for the event coverage is $4,800.",
+        "clauses": [
+          {
+            "label": "Retainer",
+            "percent": 30,
+            "anchor": "SIGNING",
+            "offsetDays": 0,
+            "quote": "A retainer of 30% of the total fee is due at signing and holds the date."
+          },
+          {
+            "label": "Second installment",
+            "percent": 35,
+            "anchor": "EVENT",
+            "offsetDays": -60,
+            "quote": "35% of the total fee is due 60 days before the event."
+          },
+          {
+            "label": "Balance",
+            "percent": 30,
+            "anchor": "EVENT",
+            "offsetDays": -30,
+            "quote": "The remaining 30% of the total fee is due 30 days before the event."
+          }
+        ],
+        "dateChangeFee": {
+          "cents": 15000,
+          "quote": "Moving the event date after signing carries a change fee of $150, due on the day the new date is confirmed."
+        },
+        "partialAllowed": true,
+        "leadDays": 14
+      },
+      "atMs": 9117
+    }
+  ],
+  "modelText": "I submitted the payment terms exactly as the contract states them. One thing needs a look: the three installments add up to 95%, not 100%.\n\n| Clause | Percent | When due |\n|---|---|---|\n| Retainer | 30% | At signing |\n| Second installment | 35% | 60 days before the event |\n| Balance | 30% | 30 days before the event |\n\nThe balance clause calls 30% \"the remaining\" amount, but 30% + 35% + 30% = 95%. That leaves 5% (about $240 of the $4,800) with no payment clause. I copied the percentages as written and did not add a clause or change a number to cover the gap. Please check with the photographer or client which figure is wrong.\n\nOther terms I submitted:\n- **Total fee:** $4,800 (480000 cents).\n- **Event date and signing:** the event is 2027-04-11 and the contract was signed 2026-11-12.\n- **Invoices:** sent 14 days before each due date.\n- **Partial payments:** accepted.\n- **Date change fee:** $150 (15000 cents), due on the day the new date is confirmed.",
+  "outcome": "refused by the server check: Clauses add up to $4,560, contract total is $4,800. Edit a step or upload again.",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",
+  "recordedOn": "2026-11-12",
+  "recordedToday": "2026-11-12"
+}

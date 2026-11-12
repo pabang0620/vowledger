@@ -1,0 +1,41 @@
+{
+  "name": "vowledger",
+  "version": "1.0.0",
+  "description": "Drag the wedding date on a Bryntum Gantt and VowLedger rewrites the couple's scheduled PayPal invoices to match.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "demo:video": "vite build && FORCE_MOCK=1 FORCE_MOCK_PAYPAL=1 node server/index.js",
+    "demo:sandbox": "vite build && FORCE_MOCK=0 FORCE_MOCK_PAYPAL=0 REQUIRE_SANDBOX=1 node server/index.js",
+    "test": "FORCE_MOCK=1 node --test test/*.test.js",
+    "check:bryntum": "node scripts/check-bryntum.mjs",
+    "record:runs": "FORCE_MOCK=1 FORCE_MOCK_PAYPAL=1 node scripts/record-runs.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.322",
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@bryntum/gantt": "npm:@bryntum/gantt-trial@^7.3.8",
+    "@bryntum/gantt-react": "^7.3.8",
+    "@paypal/agent-toolkit": "^1.11.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "paypal": "github:context-plugins/paypal-typescript-sdk#5d0df8a8817e5fdf2e2cd48e68f790ea4730aab2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.2.0",
+    "concurrently": "^10.0.7",
+    "playwright-core": "^1.65.0",
+    "vite": "^7.3.8"
+  }
+}

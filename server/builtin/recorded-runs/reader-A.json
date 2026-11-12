@@ -1,0 +1,60 @@
+{
+  "scene": "reader-A",
+  "kind": "reader",
+  "sampleKey": "A",
+  "durationMs": 11290,
+  "toolCalls": [
+    {
+      "tool": "submit_contract_terms",
+      "input": {
+        "couple": "Kim & Rivera",
+        "client": {
+          "given": "Jae",
+          "surname": "Kim",
+          "email": "kim.rivera@example.com"
+        },
+        "eventDate": "2027-01-11",
+        "signedOn": "2026-11-12",
+        "totalCents": 480000,
+        "totalQuote": "The total fee for the event coverage is $4,800.",
+        "clauses": [
+          {
+            "label": "Retainer",
+            "percent": 30,
+            "anchor": "SIGNING",
+            "offsetDays": 0,
+            "quote": "A retainer of 30% of the total fee is due at signing and holds the date."
+          },
+          {
+            "label": "Second installment",
+            "percent": 40,
+            "anchor": "EVENT",
+            "offsetDays": -60,
+            "quote": "40% of the total fee is due 60 days before the event."
+          },
+          {
+            "label": "Balance",
+            "percent": 30,
+            "anchor": "EVENT",
+            "offsetDays": -30,
+            "quote": "The remaining 30% of the total fee is due 30 days before the event."
+          }
+        ],
+        "dateChangeFee": {
+          "cents": 15000,
+          "quote": "Moving the event date after signing carries a change fee of $150, due on the day the new date is confirmed."
+        },
+        "partialAllowed": true,
+        "leadDays": 14
+      },
+      "atMs": 11290
+    }
+  ],
+  "modelText": "I submitted the payment terms for the Kim & Rivera contract, and the system confirmed it received them.\n\n- **Total fee:** $4,800.\n- **Retainer:** 30%, due at signing.\n- **Second installment:** 40%, due 60 days before the 2027-01-11 event.\n- **Balance:** 30%, due 30 days before the event.\n- **Invoicing:** invoices go out 14 days before each due date, and partial payments are accepted.\n- **Date change fee:** $150, due on the day the new date is confirmed.\n\nI also recorded the signing date (2026-11-12) and the client contact (Jae Kim).",
+  "outcome": "accepted",
+  "model": "claude-sonnet-5-5",
+  "modelName": "Claude Sonnet",
+  "backend": "Claude Agent SDK through a local Claude Code login (LLM_BACKEND=account), no API key",
+  "recordedOn": "2026-11-12",
+  "recordedToday": "2026-11-12"
+}
